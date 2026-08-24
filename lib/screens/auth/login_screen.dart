@@ -19,6 +19,21 @@ class _LoginScreenState extends State<LoginScreen> {
   final _authService = AuthService();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _lembrarMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 🔥 VERIFICA SE DEVE LEMBRAR O USUÁRIO
+    _verificarLembrarMe();
+  }
+
+  Future<void> _verificarLembrarMe() async {
+    final lembrar = await _authService.deveLembrar();
+    setState(() {
+      _lembrarMe = lembrar;
+    });
+  }
 
   @override
   void dispose() {
@@ -33,9 +48,11 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // 🔥 PASSA O VALOR DO LEMBRAR-ME
       await _authService.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
+        lembrarMe: _lembrarMe,
       );
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -84,30 +101,38 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // ===== LOGO / CAIXA 3D =====
-                  _buildLogo(),
-                  const SizedBox(height: 40),
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // ===== LOGO =====
+                _buildLogo(),
+                const SizedBox(height: 40),
 
-                  // ===== CAMPOS =====
-                  _buildEmailField(),
-                  const SizedBox(height: 16),
-                  _buildPasswordField(),
-                  const SizedBox(height: 24),
+                // ===== FORMULÁRIO =====
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      _buildEmailField(),
+                      const SizedBox(height: 16),
+                      _buildPasswordField(),
+                      const SizedBox(height: 12),
+                      _buildOptionsRow(),
+                      const SizedBox(height: 24),
+                      _buildLoginButton(),
+                      const SizedBox(height: 16),
+                      _buildRegisterLink(),
+                    ],
+                  ),
+                ),
 
-                  // ===== BOTÃO ENTRAR =====
-                  _buildLoginButton(),
-                  const SizedBox(height: 16),
+                const SizedBox(height: 40),
 
-                  // ===== LINK CADASTRO =====
-                  _buildRegisterLink(),
-                ],
-              ),
+                // ===== BENEFÍCIOS =====
+                _buildBenefits(),
+                const SizedBox(height: 20),
+              ],
             ),
           ),
         ),
@@ -120,130 +145,33 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildLogo() {
     return Column(
       children: [
-        // Caixa 3D com ícone
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            // Sombra da caixa
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: BoxStockColors.papelaoEscuro.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: BoxStockColors.papelaoEscuro.withOpacity(0.2),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-            ),
-            // Caixa principal
-            Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    BoxStockColors.papelaoClaro,
-                    BoxStockColors.papelaoMedio,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: BoxStockColors.papelaoEscuro.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(2, 4),
-                  ),
-                ],
-                border: Border.all(
-                  color: BoxStockColors.papelaoClaro.withOpacity(0.5),
-                  width: 2,
-                ),
-              ),
-              child: Stack(
-                children: [
-                  // Fita adesiva
-                  Positioned(
-                    top: 10,
-                    left: 15,
-                    right: 15,
-                    child: Container(
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: BoxStockColors.fundoSecundario.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: BoxStockColors.papelaoEscuro.withOpacity(0.1),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Ícone
-                  const Center(
-                    child: Icon(
-                      Icons.inventory_2,
-                      size: 40,
-                      color: Colors.white,
-                    ),
-                  ),
-                  // Fita adesiva inferior
-                  Positioned(
-                    bottom: 10,
-                    left: 20,
-                    right: 20,
-                    child: Container(
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: BoxStockColors.fundoSecundario.withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        // Logo
+        Image.asset(
+          'assets/images/Logo.png',
+          width: 80,
+          height: 80,
+          fit: BoxFit.contain,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
         // Nome do App
         Text(
           '📦 BoxStock',
           style: TextStyle(
-            fontSize: 34,
+            fontSize: 32,
             fontWeight: FontWeight.bold,
             color: BoxStockColors.textoPrincipal,
-            letterSpacing: 1,
+            letterSpacing: 0.5,
           ),
         ),
 
         // Slogan
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
-            color: BoxStockColors.fundoSecundario,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: BoxStockColors.papelaoClaro.withOpacity(0.3),
-              width: 1.5,
-            ),
-          ),
-          child: Text(
-            '📦 Organização que cabe no seu bolso',
-            style: TextStyle(
-              fontSize: 13,
-              color: BoxStockColors.textoPrincipal.withOpacity(0.7),
-              fontStyle: FontStyle.italic,
-            ),
+        Text(
+          'Organização que cabe no seu bolso',
+          style: TextStyle(
+            fontSize: 14,
+            color: BoxStockColors.textoPrincipal.withOpacity(0.6),
+            letterSpacing: 0.3,
           ),
         ),
       ],
@@ -256,23 +184,17 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       decoration: BoxDecoration(
         color: BoxStockColors.campos,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: BoxStockColors.papelaoEscuro.withOpacity(0.06),
+            color: BoxStockColors.papelaoEscuro.withOpacity(0.05),
+            blurRadius: 10,
             offset: const Offset(0, 4),
-            blurRadius: 12,
-            spreadRadius: 1,
-          ),
-          BoxShadow(
-            color: BoxStockColors.papelaoClaro.withOpacity(0.2),
-            offset: const Offset(-2, -2),
-            blurRadius: 8,
           ),
         ],
         border: Border.all(
           color: BoxStockColors.papelaoClaro.withOpacity(0.3),
-          width: 2,
+          width: 1.5,
         ),
       ),
       child: TextFormField(
@@ -293,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
             color: BoxStockColors.papelaoMedio,
           ),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.all(18),
+          contentPadding: EdgeInsets.all(16),
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
@@ -312,23 +234,17 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       decoration: BoxDecoration(
         color: BoxStockColors.campos,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: BoxStockColors.papelaoEscuro.withOpacity(0.06),
+            color: BoxStockColors.papelaoEscuro.withOpacity(0.05),
+            blurRadius: 10,
             offset: const Offset(0, 4),
-            blurRadius: 12,
-            spreadRadius: 1,
-          ),
-          BoxShadow(
-            color: BoxStockColors.papelaoClaro.withOpacity(0.2),
-            offset: const Offset(-2, -2),
-            blurRadius: 8,
           ),
         ],
         border: Border.all(
           color: BoxStockColors.papelaoClaro.withOpacity(0.3),
-          width: 2,
+          width: 1.5,
         ),
       ),
       child: TextFormField(
@@ -360,7 +276,7 @@ class _LoginScreenState extends State<LoginScreen> {
             },
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(18),
+          contentPadding: const EdgeInsets.all(16),
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
@@ -375,23 +291,61 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // ==================== OPÇÕES ====================
+
+  Widget _buildOptionsRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        // 🔥 LEMBRAR-ME
+        Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: Checkbox(
+                value: _lembrarMe,
+                onChanged: (value) {
+                  setState(() {
+                    _lembrarMe = value ?? false;
+                  });
+                },
+                activeColor: BoxStockColors.papelaoMedio,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Lembrar-me',
+              style: TextStyle(
+                fontSize: 14,
+                color: BoxStockColors.textoPrincipal.withOpacity(0.7),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   // ==================== BOTÃO ENTRAR ====================
 
   Widget _buildLoginButton() {
     return SizedBox(
       width: double.infinity,
-      height: 56,
+      height: 50,
       child: ElevatedButton(
         onPressed: _isLoading ? null : _login,
         style: ElevatedButton.styleFrom(
           backgroundColor: BoxStockColors.papelaoMedio,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
           ),
-          elevation: 6,
+          elevation: 4,
           shadowColor: BoxStockColors.papelaoMedio.withOpacity(0.3),
-          padding: const EdgeInsets.symmetric(vertical: 14),
         ),
         child: _isLoading
             ? const SizedBox(
@@ -405,7 +359,7 @@ class _LoginScreenState extends State<LoginScreen> {
             : const Text(
                 'Entrar',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
@@ -438,14 +392,88 @@ class _LoginScreenState extends State<LoginScreen> {
           },
           style: TextButton.styleFrom(
             foregroundColor: BoxStockColors.papelaoMedio,
+            padding: EdgeInsets.zero,
+            minimumSize: const Size(0, 0),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           child: const Text(
-            'Cadastre-se',
+            'Cadastre-se →',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 14,
-              decoration: TextDecoration.underline,
+              color: BoxStockColors.papelaoMedio,
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ==================== BENEFÍCIOS ====================
+
+  Widget _buildBenefits() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: BoxStockColors.fundoSecundario.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildBenefitItem(
+            icon: Icons.shield_outlined,
+            label: 'Seguro',
+            subtitle: 'Seus dados protegidos',
+          ),
+          _buildBenefitItem(
+            icon: Icons.speed_outlined,
+            label: 'Prático',
+            subtitle: 'Gestão rápida',
+          ),
+          _buildBenefitItem(
+            icon: Icons.auto_awesome_outlined,
+            label: 'Completo',
+            subtitle: 'Tudo que precisa',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBenefitItem({
+    required IconData icon,
+    required String label,
+    required String subtitle,
+  }) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: BoxStockColors.papelaoMedio.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: 22,
+            color: BoxStockColors.papelaoMedio,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: BoxStockColors.textoPrincipal,
+          ),
+        ),
+        Text(
+          subtitle,
+          style: TextStyle(
+            fontSize: 10,
+            color: BoxStockColors.textoPrincipal.withOpacity(0.5),
           ),
         ),
       ],

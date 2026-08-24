@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Modelo de Categoria para o BoxStock
 class Categoria {
   final String? id;
   final String nome;
@@ -22,14 +22,21 @@ class Categoria {
     };
   }
 
+  // 🔥 CORRIGIDO: LÊ TIMESTAMP CORRETAMENTE
   factory Categoria.fromMap(String id, Map<String, dynamic> map) {
+    DateTime parseDate(dynamic value) {
+      if (value == null) return DateTime.now();
+      if (value is Timestamp) return value.toDate();
+      if (value is String) return DateTime.parse(value);
+      if (value is DateTime) return value;
+      return DateTime.now();
+    }
+
     return Categoria(
       id: id,
       nome: map['nome'] ?? '',
       usuarioId: map['usuarioId'] ?? '',
-      createdAt: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'])
-          : DateTime.now(),
+      createdAt: parseDate(map['createdAt']),
     );
   }
 
@@ -56,8 +63,6 @@ class Categoria {
 
   bool get isValid => nome.isNotEmpty && nome.length >= 2;
 }
-
-// ==================== CATEGORIAS PRÉ-DEFINIDAS ====================
 
 class CategoriasPadrao {
   static const List<String> lista = [
@@ -114,9 +119,6 @@ class CategoriasPadrao {
   }
 }
 
-// ==================== MÉTODO PARA DROPDOWN (SEPARADO) ====================
-
-/// Utilitário para criar itens de dropdown de categorias
 class CategoriaDropdownHelper {
   static List<DropdownMenuItem<String>> getDropdownItems() {
     return CategoriasPadrao.lista.map((categoria) {

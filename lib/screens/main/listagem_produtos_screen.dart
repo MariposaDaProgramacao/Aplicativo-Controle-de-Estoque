@@ -9,6 +9,7 @@ import '../../main.dart';
 import 'cadastro_produto_screen.dart';
 import 'entrada_screen.dart';
 import 'saida_screen.dart';
+import 'detalhes_produto_screen.dart';
 
 class ListagemProdutosScreen extends StatefulWidget {
   const ListagemProdutosScreen({super.key});
@@ -431,36 +432,22 @@ class _ListagemProdutosScreenState extends State<ListagemProdutosScreen> {
           ),
           const SizedBox(height: 12),
           
-          // Linha 3: Botões de ação
+          // 🔥 BOTÃO DETALHES (APENAS ELE!)
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildActionButton(
-                icon: Icons.add_box,
-                label: 'Entrada',
-                color: BoxStockColors.sucesso,
-                onPressed: () => _navegarParaEntrada(produto),
-              ),
-              const SizedBox(width: 8),
-              _buildActionButton(
-                icon: Icons.remove_shopping_cart,
-                label: 'Saída',
-                color: BoxStockColors.acaoPrincipal,
-                onPressed: () => _navegarParaSaida(produto),
-              ),
-              const SizedBox(width: 8),
-              _buildActionButton(
-                icon: Icons.edit,
-                label: 'Editar',
-                color: BoxStockColors.informacao,
-                onPressed: () => _navegarParaEdicao(produto),
-              ),
-              const SizedBox(width: 8),
-              _buildActionButton(
-                icon: Icons.delete,
-                label: 'Excluir',
-                color: BoxStockColors.alerta,
-                onPressed: () => _confirmarExclusao(produto),
+                icon: Icons.visibility,
+                label: 'Ver Detalhes',
+                color: BoxStockColors.papelaoMedio,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => DetalhesProdutoScreen(produto: produto),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -476,127 +463,43 @@ class _ListagemProdutosScreenState extends State<ListagemProdutosScreen> {
     required VoidCallback onPressed,
   }) {
     return SizedBox(
-      height: 32,
+      width: 150,
+      height: 38,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: color.withOpacity(0.12),
           foregroundColor: color,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
           ),
-          side: BorderSide(color: color.withOpacity(0.3), width: 1.5),
+          side: BorderSide(
+            color: color.withOpacity(0.3),
+            width: 1.5,
+          ),
           elevation: 0,
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14),
-            const SizedBox(width: 4),
+            Icon(icon, size: 18),
+            const SizedBox(width: 8),
             Text(
               label,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ==================== NAVEGAÇÃO ====================
-
-  void _navegarParaEntrada(Produto produto) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EntradaScreen(produto: produto),
-      ),
-    ).then((_) {
-      _carregarProdutosIniciais();
-    });
-  }
-
-  void _navegarParaSaida(Produto produto) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SaidaScreen(produto: produto),
-      ),
-    ).then((_) {
-      _carregarProdutosIniciais();
-    });
-  }
-
-  void _navegarParaEdicao(Produto produto) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CadastroProdutoScreen(produto: produto),
-      ),
-    ).then((_) {
-      _carregarProdutosIniciais();
-    });
-  }
-
-  void _confirmarExclusao(Produto produto) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Row(
-          children: const [
-            Icon(Icons.warning_amber_rounded, color: BoxStockColors.alerta),
-            SizedBox(width: 8),
-            Text('Confirmar Exclusão'),
-          ],
-        ),
-        content: Text(
-          'Deseja realmente excluir o produto\n"${produto.nome}"?',
-          style: const TextStyle(color: BoxStockColors.textoPrincipal),
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              foregroundColor: BoxStockColors.textoPrincipal,
-            ),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              try {
-                await _firestoreService.excluirProduto(produto.id!);
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('✅ Produto excluído com sucesso!'),
-                    backgroundColor: BoxStockColors.sucesso,
-                  ),
-                );
-                _carregarProdutosIniciais();
-              } catch (e) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('❌ Erro ao excluir: $e'),
-                    backgroundColor: BoxStockColors.alerta,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: BoxStockColors.alerta,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            child: const Text('Excluir'),
-          ),
-        ],
+            const SizedBox(width: 4),
+            Icon(
+              Icons.arrow_forward,
+              size: 16,
+              color: color,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'listagem_produtos_screen.dart';
 import 'entrada_screen.dart';
 import 'saida_screen.dart';
 import 'historico_screen.dart';
+import 'lista_compras_screen.dart';
 import 'cadastro_produto_screen.dart';
 import '../auth/login_screen.dart';
 
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const ListagemProdutosScreen(),
     const EntradaScreen(),
     const SaidaScreen(),
+    const ListaComprasScreen(),
     const HistoricoScreen(),
   ];
 
@@ -33,22 +35,22 @@ class _HomeScreenState extends State<HomeScreen> {
     '📋 Produtos',
     '➕ Entrada',
     '➖ Saída',
+    '🛒 Compras',
     '📜 Histórico',
   ];
 
   Future<void> _logout() async {
     await _authService.logout();
     if (!mounted) return;
-    
-    // 🔥 CORRIGIDO: Adicionei a vírgula e removi o espaço extra
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('👏 Até logo!'),
         backgroundColor: Colors.blue,
         duration: Duration(seconds: 2),
-      ), // ← VÍRGULA AQUI!
+      ),
     );
-    
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -71,12 +73,23 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFFC176),
       appBar: AppBar(
-        title: Text(
-          _titulos[_selectedIndex],
-          style: const TextStyle(
-            color: Colors.brown,
-            fontWeight: FontWeight.bold,
-          ),
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/images/Logo.png',
+              width: 32,
+              height: 32,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              _titulos[_selectedIndex],
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         backgroundColor: const Color(0xFFFFDC74),
         foregroundColor: Colors.brown,
@@ -84,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.brown),
+            icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: _logout,
             tooltip: 'Sair',
           ),
@@ -135,6 +148,10 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.remove_shopping_cart),
             label: 'Saída',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'Compras',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.history),

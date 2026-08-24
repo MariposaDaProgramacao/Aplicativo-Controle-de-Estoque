@@ -184,9 +184,11 @@ class BoxStockApp extends StatelessWidget {
         fontFamily: 'Roboto',
       ),
       
-      home: StreamBuilder<User?>(
-        stream: authService.authStateChanges,
+      // 🔥 HOME COM LOGIN AUTOMÁTICO
+      home: FutureBuilder<User?>(
+        future: authService.loginAutomatico(),
         builder: (context, snapshot) {
+          // Enquanto verifica o login automático
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
               backgroundColor: BoxStockColors.fundoPrincipal,
@@ -198,11 +200,33 @@ class BoxStockApp extends StatelessWidget {
             );
           }
 
-          if (snapshot.hasData) {
+          // Se o login automático foi bem-sucedido
+          if (snapshot.data != null) {
             return const HomeScreen();
           }
 
-          return const LoginScreen();
+          // Se não, mostra a tela de login
+          return StreamBuilder<User?>(
+            stream: authService.authStateChanges,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  backgroundColor: BoxStockColors.fundoPrincipal,
+                  body: Center(
+                    child: CircularProgressIndicator(
+                      color: BoxStockColors.papelaoMedio,
+                    ),
+                  ),
+                );
+              }
+
+              if (snapshot.hasData) {
+                return const HomeScreen();
+              }
+
+              return const LoginScreen();
+            },
+          );
         },
       ),
     );

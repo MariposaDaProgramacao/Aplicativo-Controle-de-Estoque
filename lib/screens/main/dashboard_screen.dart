@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/firestore_service.dart';
 import '../../models/produto_model.dart';
-import '../../main.dart'; // ← IMPORTANTE: importa o BoxStockColors
+import '../../main.dart';
 import 'cadastro_produto_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -354,6 +354,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 🔥 TÍTULO SEM O BOTÃO "VER TODOS"
           Row(
             children: [
               const Icon(
@@ -370,22 +371,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   color: BoxStockColors.textoPrincipal,
                 ),
               ),
-              const Spacer(),
-              TextButton(
-                onPressed: () {
-                  // TODO: Navegar para lista completa
-                },
-                style: TextButton.styleFrom(
-                  foregroundColor: BoxStockColors.papelaoMedio,
-                ),
-                child: const Text(
-                  'Ver todos →',
-                  style: TextStyle(fontWeight: FontWeight.w500),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 12),
+
+          // Lista
           _carregando
               ? const Center(
                   child: Padding(
