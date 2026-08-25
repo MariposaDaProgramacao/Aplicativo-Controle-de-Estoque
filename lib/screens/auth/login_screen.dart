@@ -24,7 +24,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    // 🔥 VERIFICA SE DEVE LEMBRAR O USUÁRIO
     _verificarLembrarMe();
   }
 
@@ -48,7 +47,6 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 🔥 PASSA O VALOR DO LEMBRAR-ME
       await _authService.login(
         _emailController.text.trim(),
         _passwordController.text.trim(),
@@ -105,8 +103,15 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // ===== LOGO =====
+                // ===== ESPAÇO EXTRA PARA DESCER A LOGO =====
+                const SizedBox(height: 40),
+
+                // ===== LOGO PURA (SEM CÍRCULO) =====
                 _buildLogo(),
+                const SizedBox(height: 16),
+
+                // ===== NOME DO APP =====
+                _buildAppName(),
                 const SizedBox(height: 40),
 
                 // ===== FORMULÁRIO =====
@@ -140,23 +145,24 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ==================== LOGO ====================
+  // ==================== LOGO PURA (SEM CÍRCULO) ====================
 
   Widget _buildLogo() {
+    return Image.asset(
+      'assets/images/Logo.png',
+      width: 120,
+      height: 120,
+      fit: BoxFit.contain,
+    );
+  }
+
+  // ==================== NOME DO APP ====================
+
+  Widget _buildAppName() {
     return Column(
       children: [
-        // Logo
-        Image.asset(
-          'assets/images/Logo.png',
-          width: 80,
-          height: 80,
-          fit: BoxFit.contain,
-        ),
-        const SizedBox(height: 12),
-
-        // Nome do App
         Text(
-          '📦 BoxStock',
+          'BoxStock',
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
@@ -164,8 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
             letterSpacing: 0.5,
           ),
         ),
-
-        // Slogan
+        const SizedBox(height: 4),
         Text(
           'Organização que cabe no seu bolso',
           style: TextStyle(
@@ -297,7 +302,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        // 🔥 LEMBRAR-ME
         Row(
           children: [
             SizedBox(
