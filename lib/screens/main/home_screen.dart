@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/auth_service.dart';
+import '../../main.dart'; // 🔥 ADICIONE ESTA LINHA!
 import 'dashboard_screen.dart';
 import 'listagem_produtos_screen.dart';
 import 'entrada_screen.dart';
@@ -31,12 +32,30 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   final List<String> _titulos = [
-    '📦 BoxStock',
-    '📋 Produtos',
-    '➕ Entrada',
-    '➖ Saída',
-    '🛒 Compras',
-    '📜 Histórico',
+    'BoxStock',
+    'Produtos',
+    'Entrada',
+    'Saída',
+    'Compras',
+    'Histórico',
+  ];
+
+  final List<IconData> _icones = [
+    Icons.dashboard,
+    Icons.inventory_2,
+    Icons.add_box,
+    Icons.remove_shopping_cart,
+    Icons.shopping_cart,
+    Icons.history,
+  ];
+
+  final List<IconData> _iconesSelecionados = [
+    Icons.dashboard_outlined,
+    Icons.inventory_2_outlined,
+    Icons.add_box_outlined,
+    Icons.remove_shopping_cart_outlined,
+    Icons.shopping_cart_outlined,
+    Icons.history_outlined,
   ];
 
   Future<void> _logout() async {
@@ -46,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('👏 Até logo!'),
-        backgroundColor: Colors.blue,
+        backgroundColor: BoxStockColors.sucesso,
         duration: Duration(seconds: 2),
       ),
     );
@@ -71,14 +90,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFC176),
+      backgroundColor: BoxStockColors.fundoPrincipal,
       appBar: AppBar(
         title: Row(
           children: [
             Image.asset(
               'assets/images/Logo.png',
-              width: 32,
-              height: 32,
+              width: 28,
+              height: 28,
               fit: BoxFit.contain,
             ),
             const SizedBox(width: 10),
@@ -91,8 +110,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        backgroundColor: const Color(0xFFFFDC74),
-        foregroundColor: Colors.brown,
+        backgroundColor: BoxStockColors.papelaoMedio,
+        foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         actions: [
@@ -107,10 +126,17 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Container(
             height: 4,
             decoration: BoxDecoration(
-              color: const Color(0xFFFFE9B3),
+              gradient: LinearGradient(
+                colors: [
+                  BoxStockColors.papelaoClaro,
+                  BoxStockColors.papelaoMedio,
+                  BoxStockColors.papelaoClaro,
+                ],
+                stops: const [0.0, 0.5, 1.0],
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.brown.shade400.withOpacity(0.3),
+                  color: BoxStockColors.papelaoEscuro.withOpacity(0.3),
                   blurRadius: 4,
                 ),
               ],
@@ -119,59 +145,63 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       body: _telas[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        selectedItemColor: Colors.brown.shade800,
-        unselectedItemColor: Colors.brown.shade400,
-        backgroundColor: const Color(0xFFFFDC74),
-        elevation: 8,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: BoxStockColors.papelaoEscuro.withOpacity(0.15),
+              blurRadius: 20,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _selectedIndex,
+          onTap: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          selectedItemColor: BoxStockColors.papelaoEscuro,
+          unselectedItemColor: BoxStockColors.papelaoEscuro.withOpacity(0.4),
+          backgroundColor: BoxStockColors.fundoSecundario,
+          elevation: 0,
+          selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.inventory_2),
-            label: 'Produtos',
+          unselectedLabelStyle: TextStyle(
+            fontWeight: FontWeight.normal,
+            fontSize: 11,
+            color: BoxStockColors.papelaoEscuro.withOpacity(0.4),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add_box),
-            label: 'Entrada',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.remove_shopping_cart),
-            label: 'Saída',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Compras',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'Histórico',
-          ),
-        ],
+          items: List.generate(_titulos.length, (index) {
+            return BottomNavigationBarItem(
+              icon: Icon(
+                _selectedIndex == index
+                    ? _icones[index]
+                    : _iconesSelecionados[index],
+                size: 26,
+              ),
+              label: _titulos[index],
+            );
+          }),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _abrirCadastroProduto,
-        backgroundColor: const Color(0xFFFFDC74),
-        foregroundColor: Colors.brown,
-        elevation: 4,
+        backgroundColor: BoxStockColors.acaoPrincipal,
+        foregroundColor: Colors.white,
+        elevation: 8,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
-            color: Colors.brown.shade300,
+            color: BoxStockColors.papelaoMedio,
             width: 2,
           ),
         ),
-        child: const Icon(Icons.add, size: 32),
+        child: const Icon(Icons.add, size: 32, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
