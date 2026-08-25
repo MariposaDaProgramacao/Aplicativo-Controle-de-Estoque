@@ -102,7 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onPressed: _abrirCadastro,
         backgroundColor: BoxStockColors.acaoPrincipal,
         foregroundColor: Colors.white,
-        elevation: 6,
+        elevation: 8,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
@@ -122,44 +122,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: BoxStockColors.fundoSecundario,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            BoxStockColors.papelaoClaro.withOpacity(0.15),
+            BoxStockColors.papelaoClaro.withOpacity(0.05),
+          ],
+        ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: BoxStockColors.papelaoEscuro.withOpacity(0.15),
-            offset: const Offset(4, 8),
+            color: BoxStockColors.papelaoEscuro.withOpacity(0.08),
+            offset: const Offset(0, 4),
             blurRadius: 20,
           ),
         ],
         border: Border.all(
-          color: BoxStockColors.papelaoClaro.withOpacity(0.3),
-          width: 2,
+          color: BoxStockColors.papelaoClaro.withOpacity(0.2),
+          width: 1.5,
         ),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: BoxStockColors.papelaoClaro.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: BoxStockColors.papelaoClaro.withOpacity(0.3),
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: BoxStockColors.papelaoEscuro.withOpacity(0.1),
-                  offset: const Offset(2, 4),
-                  blurRadius: 8,
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.inventory_2,
-              color: BoxStockColors.papelaoEscuro,
-              size: 32,
-            ),
+          // 🔥 LOGO EM DESTAQUE (SEM EMOJI)
+          Image.asset(
+            'assets/images/Logo.png',
+            width: 48,
+            height: 48,
+            fit: BoxFit.contain,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -174,7 +165,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: BoxStockColors.textoPrincipal,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   'Bem-vindo ao seu controle de estoque.',
                   style: TextStyle(
@@ -185,24 +176,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
+          // Status online
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: BoxStockColors.papelaoMedio.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
+              color: BoxStockColors.sucesso.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: BoxStockColors.papelaoMedio.withOpacity(0.2),
-                width: 1,
+                color: BoxStockColors.sucesso.withOpacity(0.3),
+                width: 1.5,
               ),
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.check_circle,
-                  size: 16,
-                  color: BoxStockColors.sucesso,
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: BoxStockColors.sucesso,
+                    shape: BoxShape.circle,
+                  ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
                 Text(
                   'Online',
                   style: TextStyle(
@@ -283,7 +278,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
         border: Border.all(
-          color: BoxStockColors.papelaoClaro.withOpacity(0.2),
+          color: BoxStockColors.papelaoClaro.withOpacity(0.15),
           width: 1.5,
         ),
       ),
@@ -347,14 +342,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
         border: Border.all(
-          color: BoxStockColors.papelaoClaro.withOpacity(0.2),
+          color: BoxStockColors.papelaoClaro.withOpacity(0.15),
           width: 1.5,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔥 TÍTULO SEM O BOTÃO "VER TODOS"
+          // 🔥 TÍTULO SEM EMOJI
           Row(
             children: [
               const Icon(
@@ -364,7 +359,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(width: 8),
               const Text(
-                '📦 Últimos Produtos',
+                'Últimos Produtos',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -375,7 +370,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const SizedBox(height: 12),
 
-          // Lista
           _carregando
               ? const Center(
                   child: Padding(
@@ -397,7 +391,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            '📭 Nenhum produto cadastrado ainda',
+                            'Nenhum produto cadastrado ainda',
                             style: TextStyle(
                               fontSize: 16,
                               color: BoxStockColors.textoPrincipal.withOpacity(0.5),
@@ -425,7 +419,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         color: BoxStockColors.fundoPrincipal,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: BoxStockColors.papelaoClaro.withOpacity(0.2),
+          color: BoxStockColors.papelaoClaro.withOpacity(0.15),
           width: 1.5,
         ),
         boxShadow: [
@@ -444,7 +438,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: BoxStockColors.fundoSecundario,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: BoxStockColors.papelaoClaro.withOpacity(0.2),
+                color: BoxStockColors.papelaoClaro.withOpacity(0.15),
                 width: 1,
               ),
             ),
