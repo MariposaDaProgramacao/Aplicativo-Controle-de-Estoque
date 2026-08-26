@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../services/firestore_service.dart';
 import '../../models/lista_compra_model.dart';
 import '../../main.dart';
@@ -14,11 +15,20 @@ class ListaComprasScreen extends StatefulWidget {
 class _ListaComprasScreenState extends State<ListaComprasScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   bool _isLoading = false;
+  final Map<String, TextEditingController> _quantidadeControllers = {};
 
   @override
   void initState() {
     super.initState();
     _verificarLista();
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _quantidadeControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   Future<void> _verificarLista() async {
@@ -96,6 +106,73 @@ class _ListaComprasScreenState extends State<ListaComprasScreen> {
     );
   }
 
+  Future<void> _compartilharLista() async {
+    try {
+      final itens = await _firestoreService.listarListaCompras().first;
+      final itensPendentes = itens.where((i) => !i.comprado).toList();
+
+      if (itensPendentes.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('📭 Nenhum item pendente para comprar!'),
+            backgroundColor: BoxStockColors.informacao,
+          ),
+        );
+        return;
+      }
+
+      final texto = _gerarTextoListaComQuantidades(itensPendentes);
+      await Share.share(
+        texto,
+        subject: '🛒 Lista de Compras - BoxStock',
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❌ Erro ao compartilhar: $e'),
+          backgroundColor: BoxStockColors.alerta,
+        ),
+      );
+    }
+  }
+
+  String _gerarTextoListaComQuantidades(List<ListaCompra> itens) {
+    final buffer = StringBuffer();
+    buffer.writeln('🛒 LISTA DE COMPRAS - BoxStock');
+    buffer.writeln('=' * 40);
+    buffer.writeln('📅 ${DateTime.now().toLocal().toString().split(' ')[0]}');
+    buffer.writeln('');
+
+    for (var i = 0; i < itens.length; i++) {
+      final item = itens[i];
+      final controller = _quantidadeControllers[item.id!];
+      final quantidadeCompra = controller != null && controller.text.isNotEmpty
+          ? double.tryParse(controller.text) ?? item.quantidadeFaltante
+          : item.quantidadeFaltante;
+
+      buffer.writeln('${i + 1}. ${item.produtoNome}');
+      buffer.writeln('   📦 Estoque atual: ${item.quantidadeAtual.toStringAsFixed(0)} und.');
+      buffer.writeln('   🛒 Comprar: ${quantidadeCompra.toStringAsFixed(0)} und.');
+      buffer.writeln('   📂 ${item.categoria}');
+      buffer.writeln('');
+    }
+
+    buffer.writeln('=' * 40);
+    buffer.writeln('📦 BoxStock - Organização que cabe no seu bolso');
+    return buffer.toString();
+  }
+
+  TextEditingController _getQuantidadeController(ListaCompra item) {
+    final id = item.id!;
+    if (!_quantidadeControllers.containsKey(id)) {
+      final controller = TextEditingController(
+        text: item.quantidadeFaltante.toStringAsFixed(0),
+      );
+      _quantidadeControllers[id] = controller;
+    }
+    return _quantidadeControllers[id]!;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -110,6 +187,30 @@ class _ListaComprasScreenState extends State<ListaComprasScreen> {
         elevation: 0,
         centerTitle: true,
         actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 4),
+            child: ElevatedButton.icon(
+              onPressed: _compartilharLista,
+              icon: const Icon(Icons.share, color: Colors.white, size: 18),
+              label: const Text(
+                'Compartilhar',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: BoxStockColors.acaoPrincipal,
+                foregroundColor: Colors.white,
+                elevation: 4,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ),
           IconButton(
             icon: _isLoading
                 ? const SizedBox(
@@ -179,7 +280,7 @@ class _ListaComprasScreenState extends State<ListaComprasScreen> {
                   child: Text(
                     snapshot.error.toString(),
                     style: TextStyle(
-                      color: BoxStockColors.textoPrincipal.withOpacity(0.6),
+                      color: BoxStockColors.textoPrincipal,
                       fontSize: 12,
                     ),
                     textAlign: TextAlign.center,
@@ -292,7 +393,7 @@ class _ListaComprasScreenState extends State<ListaComprasScreen> {
           Text(
             'Produtos com estoque baixo aparecerão aqui',
             style: TextStyle(
-              color: BoxStockColors.textoPrincipal.withOpacity(0.5),
+              color: BoxStockColors.textoPrincipal,
               fontSize: 14,
             ),
           ),
@@ -368,19 +469,22 @@ class _ListaComprasScreenState extends State<ListaComprasScreen> {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: BoxStockColors.textoPrincipal.withOpacity(0.5),
+            color: BoxStockColors.textoPrincipal,
           ),
         ),
       ],
     );
   }
 
-  // ==================== CARD MELHORADO ====================
+  // ============================================================
+  // 🔥 ITEM CARD (SEM CÍRCULO)
+  // ============================================================
 
   Widget _buildItemCard(ListaCompra item) {
     final isComprado = item.comprado;
     final quantidadeAtual = item.quantidadeAtual.toStringAsFixed(0);
-    final quantidadeFaltante = item.quantidadeFaltante.toStringAsFixed(0);
+    final controller = _getQuantidadeController(item);
+    final faltante = item.quantidadeFaltante.toStringAsFixed(0);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -389,7 +493,7 @@ class _ListaComprasScreenState extends State<ListaComprasScreen> {
         color: isComprado
             ? BoxStockColors.sucesso.withOpacity(0.08)
             : BoxStockColors.campos,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isComprado
               ? BoxStockColors.sucesso.withOpacity(0.3)
@@ -404,154 +508,209 @@ class _ListaComprasScreenState extends State<ListaComprasScreen> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ===== CHECKBOX =====
-          GestureDetector(
-            onTap: () {
-              if (!isComprado) {
-                _marcarComoComprado(item);
-              }
-            },
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isComprado
-                    ? BoxStockColors.sucesso
-                    : BoxStockColors.papelaoClaro.withOpacity(0.3),
-                border: Border.all(
-                  color: isComprado
-                      ? BoxStockColors.sucesso
-                      : BoxStockColors.papelaoClaro.withOpacity(0.3),
-                  width: 2,
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  if (!isComprado) {
+                    _marcarComoComprado(item);
+                  }
+                },
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isComprado
+                        ? BoxStockColors.sucesso
+                        : BoxStockColors.papelaoClaro,
+                    border: Border.all(
+                      color: isComprado
+                          ? BoxStockColors.sucesso
+                          : BoxStockColors.papelaoClaro,
+                      width: 2,
+                    ),
+                  ),
+                  child: isComprado
+                      ? const Icon(
+                          Icons.check,
+                          size: 16,
+                          color: Colors.white,
+                        )
+                      : null,
                 ),
               ),
-              child: isComprado
-                  ? const Icon(
-                      Icons.check,
-                      size: 16,
-                      color: Colors.white,
-                    )
-                  : null,
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // ===== INFORMAÇÕES DO PRODUTO =====
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Nome do produto
-                Text(
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
                   item.produtoNome,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: isComprado
-                        ? BoxStockColors.textoPrincipal.withOpacity(0.5)
+                        ? BoxStockColors.textoPrincipal
                         : BoxStockColors.textoPrincipal,
                     decoration: isComprado
                         ? TextDecoration.lineThrough
                         : TextDecoration.none,
                   ),
                 ),
-                const SizedBox(height: 6),
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.close,
+                  size: 20,
+                  color: BoxStockColors.textoPrincipal,
+                ),
+                onPressed: () => _removerItem(item),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
 
-                // 🔥 NOVO: Informações em linha
-                Row(
-                  children: [
-                    // Estoque atual
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
+          if (!isComprado) ...[
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: BoxStockColors.fundoSecundario,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.inventory_2,
+                        size: 14,
+                        color: BoxStockColors.papelaoMedio,
                       ),
-                      decoration: BoxDecoration(
-                        color: BoxStockColors.fundoSecundario,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.inventory_2,
-                            size: 14,
-                            color: BoxStockColors.papelaoMedio,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Atual: $quantidadeAtual und.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: BoxStockColors.textoPrincipal
-                                  .withOpacity(0.7),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // 🔥 NOVO: Quantidade faltante (com destaque)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isComprado
-                            ? BoxStockColors.sucesso.withOpacity(0.15)
-                            : BoxStockColors.acaoPrincipal.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isComprado
-                              ? BoxStockColors.sucesso.withOpacity(0.3)
-                              : BoxStockColors.acaoPrincipal.withOpacity(0.3),
-                          width: 1,
+                      const SizedBox(width: 4),
+                      Text(
+                        'Atual: $quantidadeAtual und.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: BoxStockColors.textoPrincipal,
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            isComprado ? Icons.check_circle : Icons.shopping_cart,
-                            size: 14,
-                            color: isComprado
-                                ? BoxStockColors.sucesso
-                                : BoxStockColors.acaoPrincipal,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            isComprado
-                                ? '✅ Comprado'
-                                : '🛒 Comprar: $quantidadeFaltante und.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: isComprado
-                                  ? BoxStockColors.sucesso
-                                  : BoxStockColors.acaoPrincipal,
-                            ),
-                          ),
-                        ],
-                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: BoxStockColors.acaoPrincipal,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: BoxStockColors.acaoPrincipal,
+                      width: 1,
                     ),
-                  ],
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.tips_and_updates,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Sugestão: $faltante und.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 10),
 
-          // ===== BOTÃO REMOVER =====
-          IconButton(
-            icon: Icon(
-              Icons.close,
-              size: 20,
-              color: BoxStockColors.textoPrincipal.withOpacity(0.3),
+            // ============================================================
+            // 🔥 CAMPO DE QUANTIDADE (SEM CÍRCULO, APENAS A CAIXA)
+            // ============================================================
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: BoxStockColors.fundoPrincipal,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: BoxStockColors.papelaoClaro,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.shopping_cart,
+                    size: 18,
+                    color: BoxStockColors.papelaoMedio,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Comprar:',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: BoxStockColors.textoPrincipal,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 55,
+                    height: 35,
+                    decoration: BoxDecoration(
+                      color: BoxStockColors.campos,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: BoxStockColors.papelaoMedio,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: TextFormField(
+                      controller: controller,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: BoxStockColors.acaoPrincipal,
+                      ),
+                      textAlign: TextAlign.center,
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      onChanged: (value) {
+                        setState(() {});
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'und.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: BoxStockColors.textoPrincipal,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            onPressed: () => _removerItem(item),
-          ),
+          ],
         ],
       ),
     );

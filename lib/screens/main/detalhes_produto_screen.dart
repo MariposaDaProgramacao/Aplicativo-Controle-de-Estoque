@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // 🔥 ADICIONADO!
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/produto_model.dart';
 import '../../main.dart';
 import 'entrada_screen.dart';
@@ -17,7 +17,7 @@ class DetalhesProdutoScreen extends StatelessWidget {
       backgroundColor: BoxStockColors.fundoPrincipal,
       appBar: AppBar(
         title: Text(
-          '📦 ${produto.nome}',
+          produto.nome,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         backgroundColor: BoxStockColors.papelaoMedio,
@@ -43,6 +43,7 @@ class DetalhesProdutoScreen extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(),
             const SizedBox(height: 16),
@@ -51,8 +52,13 @@ class DetalhesProdutoScreen extends StatelessWidget {
             _buildStatusCard(),
             const SizedBox(height: 16),
             _buildValuesCard(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+
+            // ============================================================
+            // 🔥 BOTÕES MAIS PARA CIMA (SEM ESPAÇO EXTRA NO FINAL)
+            // ============================================================
             _buildActionButtons(context),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -88,6 +94,7 @@ class DetalhesProdutoScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // Ícone
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -121,7 +128,10 @@ class DetalhesProdutoScreen extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: BoxStockColors.fundoSecundario,
                         borderRadius: BorderRadius.circular(8),
@@ -136,7 +146,10 @@ class DetalhesProdutoScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: BoxStockColors.fundoSecundario,
                         borderRadius: BorderRadius.circular(8),
@@ -191,9 +204,15 @@ class DetalhesProdutoScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          _buildInfoRow('📦 Quantidade em estoque', '${produto.quantidade.toStringAsFixed(0)} unidades'),
+          _buildInfoRow(
+            '📦 Quantidade em estoque',
+            '${produto.quantidade.toStringAsFixed(0)} unidades',
+          ),
           const Divider(color: BoxStockColors.papelaoClaro),
-          _buildInfoRow('⚠️ Estoque mínimo', '${produto.estoqueMinimo.toStringAsFixed(0)} unidades'),
+          _buildInfoRow(
+            '⚠️ Estoque mínimo',
+            '${produto.estoqueMinimo.toStringAsFixed(0)} unidades',
+          ),
           if (produto.descricao.isNotEmpty) ...[
             const Divider(color: BoxStockColors.papelaoClaro),
             _buildInfoRow('📝 Descrição', produto.descricao),
@@ -454,70 +473,88 @@ class DetalhesProdutoScreen extends StatelessWidget {
     );
   }
 
-  // ==================== BOTÕES DE AÇÃO ====================
+  // ==================== BOTÕES DE AÇÃO (AJUSTADOS) ====================
 
   Widget _buildActionButtons(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildActionButton(
-            icon: Icons.add_box,
-            label: 'Entrada',
-            color: BoxStockColors.sucesso,
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => EntradaScreen(produto: produto),
-                ),
-              );
-            },
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: BoxStockColors.campos.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: BoxStockColors.papelaoClaro.withOpacity(0.15),
+          width: 1,
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildActionButton(
-            icon: Icons.remove_shopping_cart,
-            label: 'Saída',
-            color: BoxStockColors.acaoPrincipal,
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => SaidaScreen(produto: produto),
-                ),
-              );
-            },
-          ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            // 🔥 BOTÃO ENTRADA
+            Expanded(
+              child: _buildActionButton(
+                icon: Icons.add_box,
+                label: 'Entrada',
+                color: BoxStockColors.sucesso,
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => EntradaScreen(produto: produto),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            // 🔥 BOTÃO SAÍDA
+            Expanded(
+              child: _buildActionButton(
+                icon: Icons.remove_shopping_cart,
+                label: 'Saída',
+                color: BoxStockColors.acaoPrincipal,
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => SaidaScreen(produto: produto),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            // 🔥 BOTÃO EDITAR
+            Expanded(
+              child: _buildActionButton(
+                icon: Icons.edit,
+                label: 'Editar',
+                color: BoxStockColors.informacao,
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CadastroProdutoScreen(produto: produto),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            // 🔥 BOTÃO EXCLUIR
+            Expanded(
+              child: _buildActionButton(
+                icon: Icons.delete,
+                label: 'Excluir',
+                color: BoxStockColors.alerta,
+                onPressed: () {
+                  _confirmarExclusao(context);
+                },
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildActionButton(
-            icon: Icons.edit,
-            label: 'Editar',
-            color: BoxStockColors.informacao,
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => CadastroProdutoScreen(produto: produto),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildActionButton(
-            icon: Icons.delete,
-            label: 'Excluir',
-            color: BoxStockColors.alerta,
-            onPressed: () {
-              _confirmarExclusao(context);
-            },
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -528,7 +565,7 @@ class DetalhesProdutoScreen extends StatelessWidget {
     required VoidCallback onPressed,
   }) {
     return SizedBox(
-      height: 48,
+      height: 44,
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
@@ -589,16 +626,15 @@ class DetalhesProdutoScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              // Fecha o diálogo e a tela de detalhes
               Navigator.pop(context); // Fecha o diálogo
               Navigator.pop(context); // Fecha a tela de detalhes
-              
+
               try {
                 await FirebaseFirestore.instance
                     .collection('produtos')
                     .doc(produto.id)
                     .delete();
-                
+
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(

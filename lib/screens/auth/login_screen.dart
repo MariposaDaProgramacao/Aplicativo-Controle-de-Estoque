@@ -92,6 +92,157 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // 🔥 FUNÇÃO PARA ABRIR O SOBRE
+  void _mostrarSobre() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Column(
+          children: [
+            // Logo pequena
+            Image.asset(
+              'assets/images/Logo.png',
+              width: 60,
+              height: 60,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '📦 BoxStock',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: BoxStockColors.textoPrincipal,
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Divider(color: BoxStockColors.papelaoClaro),
+              const SizedBox(height: 8),
+              
+              // Tecnologias
+              const Text(
+                '🛠️ Tecnologias utilizadas:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: BoxStockColors.textoPrincipal,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildTechItem('🎯 Flutter', 'Framework para desenvolvimento mobile'),
+              _buildTechItem('📱 Dart', 'Linguagem de programação'),
+              _buildTechItem('🔥 Firebase', 'Backend em nuvem'),
+              _buildTechItem('🔐 Firebase Auth', 'Autenticação de usuários'),
+              _buildTechItem('📊 Cloud Firestore', 'Banco de dados em tempo real'),
+              
+              const SizedBox(height: 12),
+              const Divider(color: BoxStockColors.papelaoClaro),
+              const SizedBox(height: 8),
+              
+              // Sobre o desenvolvedor
+              const Text(
+                '👩‍💻 Desenvolvido por:',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: BoxStockColors.textoPrincipal,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Shanaya Nataly',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: BoxStockColors.textoPrincipal,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '📚 Curso Técnico em Desenvolvimento de Sistemas',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: BoxStockColors.textoPrincipal.withOpacity(0.6),
+                ),
+              ),
+              
+              const SizedBox(height: 12),
+              const Divider(color: BoxStockColors.papelaoClaro),
+              const SizedBox(height: 8),
+              
+              // Versão
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 14,
+                    color: BoxStockColors.textoPrincipal.withOpacity(0.4),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Versão 1.0.0',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: BoxStockColors.textoPrincipal.withOpacity(0.4),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: BoxStockColors.papelaoMedio,
+            ),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTechItem(String titulo, String descricao) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            titulo,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: BoxStockColors.textoPrincipal,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '— $descricao',
+              style: TextStyle(
+                fontSize: 12,
+                color: BoxStockColors.textoPrincipal.withOpacity(0.6),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,10 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // ===== ESPAÇO EXTRA PARA DESCER A LOGO =====
-                const SizedBox(height: 40),
-
-                // ===== LOGO PURA (SEM CÍRCULO) =====
+                // ===== LOGO =====
                 _buildLogo(),
                 const SizedBox(height: 16),
 
@@ -132,10 +280,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
 
                 // ===== BENEFÍCIOS =====
                 _buildBenefits(),
+
+                const SizedBox(height: 16),
+
+                // ===== BOTÃO SOBRE =====
+                _buildSobreButton(),
+
                 const SizedBox(height: 20),
               ],
             ),
@@ -145,7 +299,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ==================== LOGO PURA (SEM CÍRCULO) ====================
+  // ==================== LOGO ====================
 
   Widget _buildLogo() {
     return Image.asset(
@@ -417,7 +571,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildBenefits() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         color: BoxStockColors.fundoSecundario.withOpacity(0.3),
         borderRadius: BorderRadius.circular(16),
@@ -481,6 +635,39 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  // ==================== BOTÃO SOBRE ====================
+
+  Widget _buildSobreButton() {
+    return Center(
+      child: TextButton.icon(
+        onPressed: _mostrarSobre,
+        icon: Icon(
+          Icons.info_outline,
+          size: 18,
+          color: BoxStockColors.papelaoMedio.withOpacity(0.6),
+        ),
+        label: Text(
+          'Sobre o BoxStock',
+          style: TextStyle(
+            fontSize: 13,
+            color: BoxStockColors.papelaoMedio.withOpacity(0.6),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: BoxStockColors.papelaoMedio.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

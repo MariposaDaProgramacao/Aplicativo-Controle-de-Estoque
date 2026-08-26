@@ -322,7 +322,7 @@ class _CadastroProdutoScreenState extends State<CadastroProdutoScreen> {
           _buildNomeField(),
           const SizedBox(height: 16),
 
-          // Campos 2: Código
+          // Campo 2: Código
           _buildCodigoField(),
           const SizedBox(height: 16),
 
@@ -334,24 +334,25 @@ class _CadastroProdutoScreenState extends State<CadastroProdutoScreen> {
           _buildDescricaoField(),
           const SizedBox(height: 16),
 
-          // Campos 5 e 6: Quantidade e Estoque Mínimo
-          Row(
-            children: [
-              Expanded(child: _buildQuantidadeField()),
-              const SizedBox(width: 12),
-              Expanded(child: _buildEstoqueMinimoField()),
-            ],
-          ),
+          // ============================================================
+          // 🔥 CAMPOS REORGANIZADOS - UM ABAIXO DO OUTRO
+          // ============================================================
+
+          // 🔥 QUANTIDADE
+          _buildQuantidadeField(),
           const SizedBox(height: 16),
 
-          // Campos 7 e 8: Preço Custo e Preço Venda
-          Row(
-            children: [
-              Expanded(child: _buildPrecoCustoField()),
-              const SizedBox(width: 12),
-              Expanded(child: _buildPrecoVendaField()),
-            ],
-          ),
+          // 🔥 ESTOQUE MÍNIMO
+          _buildEstoqueMinimoField(),
+          const SizedBox(height: 16),
+
+          // 🔥 PREÇO DE CUSTO
+          _buildPrecoCustoField(),
+          const SizedBox(height: 16),
+
+          // 🔥 PREÇO DE VENDA
+          _buildPrecoVendaField(),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -384,6 +385,7 @@ class _CadastroProdutoScreenState extends State<CadastroProdutoScreen> {
           ),
           border: InputBorder.none,
           contentPadding: EdgeInsets.all(16),
+          hintText: 'Ex: Teclado USB',
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
@@ -420,6 +422,7 @@ class _CadastroProdutoScreenState extends State<CadastroProdutoScreen> {
           ),
           border: InputBorder.none,
           contentPadding: EdgeInsets.all(16),
+          hintText: 'Ex: TEC001',
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {

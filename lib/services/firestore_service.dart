@@ -4,6 +4,7 @@ import '../models/produto_model.dart';
 import '../models/categoria_model.dart';
 import '../models/movimento_model.dart';
 import '../models/lista_compra_model.dart';
+import '../services/notification_service.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -26,8 +27,8 @@ class FirestoreService {
           .collection('produtos')
           .add(produto.toMap());
       
-      // Verifica se o produto precisa ser adicionado à lista de compras
       await verificarListaCompras();
+      await verificarEstoqueENotificar(); // 🔔 NOTIFICAÇÃO
       
       return docRef.id;
     } catch (e) {
@@ -104,8 +105,8 @@ class FirestoreService {
       dados['updatedAt'] = DateTime.now().toIso8601String();
       await _firestore.collection('produtos').doc(id).update(dados);
       
-      // Verifica se o produto precisa ser adicionado à lista de compras
       await verificarListaCompras();
+      await verificarEstoqueENotificar(); // 🔔 NOTIFICAÇÃO
     } catch (e) {
       throw Exception('Erro ao atualizar produto: $e');
     }
@@ -122,8 +123,8 @@ class FirestoreService {
         'updatedAt': DateTime.now().toIso8601String(),
       });
       
-      // Verifica se o produto precisa ser adicionado à lista de compras
       await verificarListaCompras();
+      await verificarEstoqueENotificar(); // 🔔 NOTIFICAÇÃO
     } catch (e) {
       throw Exception('Erro ao atualizar quantidade: $e');
     }
@@ -192,6 +193,9 @@ class FirestoreService {
       final docRef = await _firestore
           .collection('movimentacoes')
           .add(movimento.toMap());
+      
+      await verificarEstoqueENotificar(); // 🔔 NOTIFICAÇÃO
+      
       return docRef.id;
     } catch (e) {
       throw Exception('Erro ao registrar movimentação: $e');
@@ -429,11 +433,10 @@ class FirestoreService {
   }
 
   // ============================================================
-  // 🔥 MÉTODO PÚBLICO - VERIFICAÇÃO AUTOMÁTICA
+  // 🔥 MÉTODO PÚBLICO - VERIFICAÇÃO AUTOMÁTICA DA LISTA DE COMPRAS
   // ============================================================
 
   /// Verifica automaticamente se algum produto precisa ser adicionado à lista de compras
-  /// Este método é público e pode ser chamado de qualquer lugar
   Future<void> verificarListaCompras() async {
     if (!_isAuthenticated) return;
 
@@ -448,7 +451,6 @@ class FirestoreService {
         final quantidade = (data['quantidade'] ?? 0).toDouble();
         final estoqueMinimo = (data['estoqueMinimo'] ?? 0).toDouble();
 
-        // Se o estoque está abaixo ou igual ao mínimo, adiciona à lista
         if (quantidade <= estoqueMinimo) {
           final produto = Produto.fromMap(doc.id, data);
           final item = ListaCompra(
@@ -465,7 +467,6 @@ class FirestoreService {
           );
           await adicionarListaCompra(item);
         } else {
-          // Se o estoque está acima do mínimo, remove da lista de compras
           final listaSnapshot = await _firestore
               .collection('lista_compras')
               .where('produtoId', isEqualTo: doc.id)
@@ -480,6 +481,47 @@ class FirestoreService {
       }
     } catch (e) {
       print('Erro ao verificar lista de compras: $e');
+    }
+  }
+
+  // ============================================================
+  // 🔔 VERIFICAR ESTOQUE E NOTIFICAR
+  // ============================================================
+
+  /// Verifica se algum produto está com estoque baixo e dispara uma notificação
+  Future<void> verificarEstoqueENotificar() async {
+    if (!_isAuthenticated) return;
+
+    try {
+      final produtosSnapshot = await _firestore
+          .collection('produtos')
+          .where('usuarioId', isEqualTo: _userId)
+          .get();
+
+      int contador = 0;
+
+      for (final doc in produtosSnapshot.docs) {
+        final data = doc.data();
+        final quantidade = (data['quantidade'] ?? 0).toDouble();
+        final estoqueMinimo = (data['estoqueMinimo'] ?? 0).toDouble();
+        final nome = data['nome'] ?? 'Produto';
+
+        // Se o estoque está abaixo ou igual ao mínimo
+        if (quantidade <= estoqueMinimo) {
+          contador++;
+          final faltam = estoqueMinimo - quantidade;
+
+          // 🔔 Mostra notificação
+          await NotificationService.mostrarNotificacao(
+            id: contador,
+            titulo: '⚠️ Estoque Baixo!',
+            corpo: '$nome está com apenas $quantidade und. Faltam $faltam.',
+            payload: 'produto_${doc.id}',
+          );
+        }
+      }
+    } catch (e) {
+      print('Erro ao verificar estoque: $e');
     }
   }
 
