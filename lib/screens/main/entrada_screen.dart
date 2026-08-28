@@ -1,51 +1,123 @@
+// ============================================================
+// 📁 entrada_screen.dart
+// ============================================================
+// 🎯 O QUE É ESSE ARQUIVO?
+// 
+// 🔍 ANALOGIA: Imagine que você está no "ESTOQUE" da sua loja
+//              e chegou uma nova remessa de produtos. Você precisa
+//              registrar a ENTRADA desses produtos no sistema.
+//              Essa tela é o "FORMULÁRIO DE ENTRADA" onde você
+//              adiciona mais unidades ao estoque.
+// 
+// 🏠 Ele é como o "REGISTRO DE CHEGADA" do estoque:
+//    - Você busca o produto que chegou
+//    - Digita a quantidade que chegou
+//    - (Opcional) Digita o preço unitário
+//    - (Opcional) Escreve uma observação
+//    - Clica em "Registrar Entrada" e o estoque aumenta!
+// ============================================================
+
+// 🔌 IMPORTANDO AS FERRAMENTAS
+// Linha 1: Importa o Flutter para construir a tela
 import 'package:flutter/material.dart';
+// Linha 2: Importa o Firebase Auth para pegar o usuário logado
 import 'package:firebase_auth/firebase_auth.dart';
+// Linha 3: Importa o Firestore para buscar produtos
 import 'package:cloud_firestore/cloud_firestore.dart';
+// Linha 4: Importa o serviço do Firestore para salvar dados
 import '../../services/firestore_service.dart';
+// Linha 5: Importa o modelo de Produto
 import '../../models/produto_model.dart';
+// Linha 6: Importa o modelo de Movimento (entrada/saída)
 import '../../models/movimento_model.dart';
+// Linha 7: Importa as cores do sistema
 import '../../main.dart';
 
+// ============================================================
+// 🏠 CLASSE ENTRADASCREEN — A "TELA DE ENTRADA"
+// ============================================================
+// Linha 10: Define a classe EntradaScreen
+// StatefulWidget = a tela pode mudar (busca, seleção, etc.)
 class EntradaScreen extends StatefulWidget {
+  // Linha 11: O produto que pode vir pré-selecionado
+  // Se veio da listagem, já vem com o produto escolhido.
   final Produto? produto;
 
+  // Linha 13: Construtor com chave e produto opcional
   const EntradaScreen({super.key, this.produto});
 
+  // Linha 15-17: Cria o estado da tela
   @override
   State<EntradaScreen> createState() => _EntradaScreenState();
 }
 
+// ============================================================
+// 🧠 _ENTRADASCREENSTATE — A "MEMÓRIA" DA TELA
+// ============================================================
+// Linha 21: Classe que guarda o estado da tela de entrada
 class _EntradaScreenState extends State<EntradaScreen> {
+  
+  // ============================================================
+  // 📦 ATRIBUTOS — As "ferramentas" da tela
+  // ============================================================
+  
+  // Linha 24: Instância do FirestoreService (o "entregador" dos dados)
   final FirestoreService _firestoreService = FirestoreService();
+  
+  // Linha 25: Chave do formulário (valida os campos)
   final _formKey = GlobalKey<FormState>();
-  final _quantidadeController = TextEditingController();
-  final _precoController = TextEditingController();
-  final _observacaoController = TextEditingController();
-  final _buscaController = TextEditingController();
-
+  
+  // Linhas 26-29: Controladores dos campos de texto
+  // Analogia: São "CADERNOS" onde o usuário escreve as informações.
+  final _quantidadeController = TextEditingController(); // Caderno da quantidade
+  final _precoController = TextEditingController(); // Caderno do preço
+  final _observacaoController = TextEditingController(); // Caderno da observação
+  final _buscaController = TextEditingController(); // Caderno da busca
+  
+  // Linha 31: Controla se está carregando
   bool _isLoading = false;
+  
+  // Linha 32: Controla se está carregando a lista de produtos
   bool _carregandoProdutos = false;
+  
+  // Linha 33: Se tem mais produtos para carregar (paginação)
   bool _temMaisProdutos = true;
+  
+  // Linha 34: Lista de produtos encontrados na busca
   List<Produto> _produtosEncontrados = [];
+  
+  // Linha 35: O produto selecionado para a entrada
   Produto? _produtoSelecionado;
+  
+  // Linha 36: Se veio da listagem (produto já selecionado)
   bool _veioDaListagem = false;
-
+  
+  // Linha 38: Quantos produtos carregar por vez (paginação)
   static const int _limitePorPagina = 5;
 
+  // ============================================================
+  // 🚀 INITSTATE — "O QUE ACONTECE QUANDO A TELA ABRE"
+  // ============================================================
+  // Linhas 41-49: Função chamada quando a tela é aberta.
+  // Analogia: É a "RECEPCIONISTA" que prepara a tela.
   @override
   void initState() {
-    super.initState();
-    _veioDaListagem = widget.produto != null;
-    _produtoSelecionado = widget.produto;
+    super.initState(); // Chama o initState da classe pai
+    _veioDaListagem = widget.produto != null; // Veio com produto?
+    _produtoSelecionado = widget.produto; // Guarda o produto
 
-    if (_veioDaListagem) {
-      _buscaController.text = _produtoSelecionado!.nome;
-      _produtosEncontrados = [_produtoSelecionado!];
-    } else {
+    if (_veioDaListagem) { // Se veio da listagem
+      _buscaController.text = _produtoSelecionado!.nome; // Coloca o nome na busca
+      _produtosEncontrados = [_produtoSelecionado!]; // Já mostra o produto
+    } else { // Se não veio, carrega os produtos
       _carregarProdutosIniciais();
     }
   }
 
+  // ============================================================
+  // 🧹 DISPOSE — "LIMPA A MESA" QUANDO SAI
+  // ============================================================
+  // Linhas 51-57: Limpa os controladores quando a tela fecha.
   @override
   void dispose() {
     _quantidadeController.dispose();
@@ -55,23 +127,29 @@ class _EntradaScreenState extends State<EntradaScreen> {
     super.dispose();
   }
 
-  // ==================== MÉTODOS DE BUSCA ====================
-
+  // ============================================================
+  // 📋 _CARREGARPRODUTOSINICIAIS — "CARREGA OS PRIMEIROS PRODUTOS"
+  // ============================================================
+  // Linhas 61: Função que carrega os primeiros 5 produtos.
+  // Analogia: É como "ABRIR A PRATELEIRA" e pegar os 5 primeiros.
   Future<void> _carregarProdutosIniciais() async {
+    // Linha 62-65: Mostra o carregamento
     setState(() {
       _carregandoProdutos = true;
       _produtosEncontrados = [];
       _temMaisProdutos = true;
     });
 
-    try {
+    try { // Tenta buscar os produtos
+      // Linha 68: Busca os produtos (termo vazio = todos)
       final produtos = await _buscarProdutos('');
+      // Linha 69-73: Atualiza a lista
       setState(() {
         _produtosEncontrados = produtos;
         _carregandoProdutos = false;
         _temMaisProdutos = produtos.length >= _limitePorPagina;
       });
-    } catch (e) {
+    } catch (e) { // Se deu erro
       setState(() {
         _carregandoProdutos = false;
       });
@@ -79,25 +157,37 @@ class _EntradaScreenState extends State<EntradaScreen> {
     }
   }
 
+  // ============================================================
+  // 🔍 _BUSCARPRODUTOS — "BUSCA PRODUTOS NO FIRESTORE"
+  // ============================================================
+  // Linha 80: Função que busca produtos por nome.
+  // Analogia: É como "PROCURAR" um produto na prateleira.
   Future<List<Produto>> _buscarProdutos(String termo) async {
     try {
+      // Linha 82: Pega o usuário logado
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return [];
+      if (user == null) return []; // Se não tem usuário, retorna vazio
 
+      // Linha 85: A variável que vai guardar os resultados
       QuerySnapshot snapshot;
 
+      // Linha 87: Se o termo de busca está vazio...
       if (termo.isEmpty) {
+        // Linha 88-92: Busca todos os produtos (limitado a 5)
         snapshot = await FirebaseFirestore.instance
-            .collection('produtos')
-            .where('usuarioId', isEqualTo: user.uid)
-            .orderBy('nome')
-            .limit(_limitePorPagina)
-            .get();
+            .collection('produtos') // Vai na coleção "produtos"
+            .where('usuarioId', isEqualTo: user.uid) // Só do usuário
+            .orderBy('nome') // Ordena por nome
+            .limit(_limitePorPagina) // Pega só 5
+            .get(); // Executa a busca
       } else {
-        final termoLower = termo.toLowerCase();
+        // Linha 94-98: Se tem termo de busca, faz uma busca com filtro
+        // Analogia: É como "PROCURAR" um produto pelo nome.
+        final termoLower = termo.toLowerCase(); // Tudo minúsculo
         final termoUpper = termoLower.substring(0, termoLower.length - 1) +
             String.fromCharCode(termoLower.codeUnitAt(termoLower.length - 1) + 1);
 
+        // Linha 100-107: Busca produtos com nome parecido
         snapshot = await FirebaseFirestore.instance
             .collection('produtos')
             .where('usuarioId', isEqualTo: user.uid)
@@ -108,39 +198,52 @@ class _EntradaScreenState extends State<EntradaScreen> {
             .get();
       }
 
+      // Linha 110-116: Converte os resultados em lista de Produto
       return snapshot.docs
-          .where((doc) => doc.data() != null)
+          .where((doc) => doc.data() != null) // Ignora dados nulos
           .map((doc) {
             final data = doc.data() as Map<String, dynamic>;
-            return Produto.fromMap(doc.id, data);
+            return Produto.fromMap(doc.id, data); // Converte para Produto
           })
           .toList();
-    } catch (e) {
+    } catch (e) { // Se deu erro
       throw Exception('Erro ao buscar produtos: $e');
     }
   }
 
+  // ============================================================
+  // 📥 _CARREGARMAISPRODUTOS — "CARREGA MAIS PRODUTOS"
+  // ============================================================
+  // Linha 121: Função que carrega mais 5 produtos.
+  // Analogia: É como "PUXAR" mais produtos da prateleira.
   Future<void> _carregarMaisProdutos() async {
+    // Linha 122: Se já está carregando ou não tem mais, para aqui.
     if (_carregandoProdutos || !_temMaisProdutos) return;
 
+    // Linha 124-126: Mostra o carregamento
     setState(() {
       _carregandoProdutos = true;
     });
 
     try {
+      // Linha 129: Pega o usuário logado
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
+      // Linha 132: Pega o último produto da lista
       final ultimoProduto = _produtosEncontrados.last;
 
+      // Linha 134-140: Busca produtos a partir do último
+      // Analogia: É como "COMEÇAR DE ONDE PAROU".
       final snapshot = await FirebaseFirestore.instance
           .collection('produtos')
           .where('usuarioId', isEqualTo: user.uid)
           .orderBy('nome')
-          .startAfter([ultimoProduto.nome])
-          .limit(_limitePorPagina)
+          .startAfter([ultimoProduto.nome]) // Começa depois do último
+          .limit(_limitePorPagina) // Pega mais 5
           .get();
 
+      // Linha 143-149: Converte os resultados
       final novosProdutos = snapshot.docs
           .where((doc) => doc.data() != null)
           .map((doc) {
@@ -149,12 +252,13 @@ class _EntradaScreenState extends State<EntradaScreen> {
           })
           .toList();
 
+      // Linha 151-156: Adiciona os novos à lista
       setState(() {
         _produtosEncontrados.addAll(novosProdutos);
         _carregandoProdutos = false;
         _temMaisProdutos = novosProdutos.length >= _limitePorPagina;
       });
-    } catch (e) {
+    } catch (e) { // Se deu erro
       setState(() {
         _carregandoProdutos = false;
       });
@@ -162,27 +266,40 @@ class _EntradaScreenState extends State<EntradaScreen> {
     }
   }
 
-  // ==================== MÉTODO DE REGISTRO ====================
-
+  // ============================================================
+  // 📝 _REGISTRARENTRADA — "REGISTRA A ENTRADA"
+  // ============================================================
+  // Linha 164: Função que registra a entrada.
+  // Analogia: É o "ATENDENTE" que confirma a chegada do produto.
   Future<void> _registrarEntrada() async {
+    // Linha 165: Valida o formulário
     if (!_formKey.currentState!.validate()) return;
+    // Linha 166: Verifica se tem produto selecionado
     if (_produtoSelecionado == null) {
       _showErrorDialog('Selecione um produto');
       return;
     }
 
+    // Linha 170: Mostra o carregamento
     setState(() => _isLoading = true);
 
     try {
+      // Linha 173: Pega a quantidade digitada
       final quantidade = double.parse(_quantidadeController.text);
+      // Linha 174: Calcula a nova quantidade
       final novaQuantidade = _produtoSelecionado!.quantidade + quantidade;
 
+      // Linha 176-178: Atualiza a quantidade no Firestore
       await _firestoreService.atualizarQuantidade(
         _produtoSelecionado!.id!,
         novaQuantidade,
       );
 
+      // Linha 181: Pega o usuário logado
       final user = FirebaseAuth.instance.currentUser!;
+      
+      // Linha 182-193: Cria o registro de movimentação
+      // Analogia: É como "ESCREVER NO DIÁRIO" que algo entrou.
       final movimento = Movimento(
         produtoId: _produtoSelecionado!.id!,
         produtoNome: _produtoSelecionado!.nome,
@@ -196,10 +313,13 @@ class _EntradaScreenState extends State<EntradaScreen> {
         usuarioEmail: user.email ?? '',
         createdAt: DateTime.now(),
       );
+      // Linha 195: Salva a movimentação
       await _firestoreService.criarMovimento(movimento);
 
+      // Linha 197-198: Verifica se a tela ainda está aberta
       if (!mounted) return;
 
+      // Linha 200-204: Mostra mensagem de sucesso
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('✅ +${quantidade.toStringAsFixed(0)} unidades de "${_produtoSelecionado!.nome}" registradas!'),
@@ -208,6 +328,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
         ),
       );
 
+      // Linha 206-211: Limpa os campos
       _quantidadeController.clear();
       _precoController.clear();
       _observacaoController.clear();
@@ -216,15 +337,20 @@ class _EntradaScreenState extends State<EntradaScreen> {
         _buscaController.clear();
         _veioDaListagem = false;
       });
+      // Linha 212: Recarrega a lista de produtos
       _carregarProdutosIniciais();
 
-    } catch (e) {
+    } catch (e) { // Se deu erro
       _showErrorDialog('Erro ao registrar entrada: $e');
-    } finally {
+    } finally { // Sempre acontece
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
+  // ============================================================
+  // ❌ _SHOWERRORDIALOG — "MOSTRA O ERRO"
+  // ============================================================
+  // Linha 220: Função que mostra um diálogo de erro.
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -253,12 +379,19 @@ class _EntradaScreenState extends State<EntradaScreen> {
     );
   }
 
-  // ==================== WIDGETS ====================
-
+  // ============================================================
+  // 🏗️ BUILD — "CONSTRÓI A TELA DE ENTRADA"
+  // ============================================================
+  // Linha 240: A função que constrói toda a tela.
   @override
   Widget build(BuildContext context) {
+    // Linha 241: Retorna um Scaffold (a estrutura básica)
     return Scaffold(
       backgroundColor: BoxStockColors.fundoPrincipal,
+      
+      // ============================================================
+      // 📱 APPBAR — A "BARRA SUPERIOR"
+      // ============================================================
       appBar: AppBar(
         title: const Text(
           '➕ Registrar Entrada',
@@ -284,43 +417,63 @@ class _EntradaScreenState extends State<EntradaScreen> {
           ),
         ),
       ),
+      
+      // ============================================================
+      // 📄 BODY — O "CORPO" DA TELA
+      // ============================================================
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: SingleChildScrollView(
+          child: SingleChildScrollView( // Permite rolar
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ===== SE VEIO DA LISTAGEM, MOSTRA O PRODUTO SELECIONADO =====
+                // ============================================================
+                // ✅ PRODUTO SELECIONADO (se veio da listagem)
+                // ============================================================
                 if (_veioDaListagem) _buildProdutoSelecionadoCard(),
                 const SizedBox(height: 12),
 
-                // ===== CAMPO DE BUSCA =====
+                // ============================================================
+                // 🔍 CAMPO DE BUSCA
+                // ============================================================
                 _buildBuscaField(),
                 const SizedBox(height: 12),
 
-                // ===== LISTA DE PRODUTOS =====
+                // ============================================================
+                // 📋 LISTA DE PRODUTOS
+                // ============================================================
                 _buildListaProdutos(),
                 const SizedBox(height: 16),
 
-                // ===== DIVISOR =====
+                // ============================================================
+                // ➖ DIVISOR
+                // ============================================================
                 const Divider(color: BoxStockColors.papelaoClaro),
                 const SizedBox(height: 16),
 
-                // ===== QUANTIDADE =====
+                // ============================================================
+                // 🔢 QUANTIDADE
+                // ============================================================
                 _buildQuantidadeField(),
                 const SizedBox(height: 16),
 
-                // ===== PREÇO UNITÁRIO =====
+                // ============================================================
+                // 💰 PREÇO UNITÁRIO
+                // ============================================================
                 _buildPrecoField(),
                 const SizedBox(height: 16),
 
-                // ===== OBSERVAÇÃO =====
+                // ============================================================
+                // 📝 OBSERVAÇÃO
+                // ============================================================
                 _buildObservacaoField(),
                 const SizedBox(height: 24),
 
-                // ===== BOTÃO REGISTRAR =====
+                // ============================================================
+                // 🔘 BOTÃO REGISTRAR
+                // ============================================================
                 _buildRegistrarButton(),
               ],
             ),
@@ -330,8 +483,11 @@ class _EntradaScreenState extends State<EntradaScreen> {
     );
   }
 
-  // ==================== PRODUTO SELECIONADO (CARD) ====================
-
+  // ============================================================
+  // ✅ _BUILDPRODUTOSELECIONADOCARD — "CONSTRÓI O CARD DO PRODUTO SELECIONADO"
+  // ============================================================
+  // Linha 329: Função que mostra o produto já selecionado.
+  // Analogia: É como uma "ETIQUETA" verde dizendo qual produto você escolheu.
   Widget _buildProdutoSelecionadoCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -359,6 +515,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
       ),
       child: Row(
         children: [
+          // Ícone de check
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
@@ -372,6 +529,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
             ),
           ),
           const SizedBox(width: 14),
+          // Informações do produto
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,6 +555,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
               ],
             ),
           ),
+          // Estoque atual
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
@@ -432,8 +591,11 @@ class _EntradaScreenState extends State<EntradaScreen> {
     );
   }
 
-  // ==================== BUSCA ====================
-
+  // ============================================================
+  // 🔍 _BUILDBUSCAFIELD — "CONSTRÓI O CAMPO DE BUSCA"
+  // ============================================================
+  // Linha 399: Função que constrói o campo de busca.
+  // Analogia: É como a "LUPA" para procurar produtos.
   Widget _buildBuscaField() {
     return Container(
       decoration: BoxDecoration(
@@ -502,13 +664,17 @@ class _EntradaScreenState extends State<EntradaScreen> {
     );
   }
 
-  // ==================== LISTA DE PRODUTOS ====================
-
+  // ============================================================
+  // 📋 _BUILDLISTAPRODUTOS — "CONSTRÓI A LISTA DE PRODUTOS"
+  // ============================================================
+  // Linha 448: Função que constrói a lista de produtos encontrados.
   Widget _buildListaProdutos() {
+    // Linha 449: Se veio da listagem, não mostra a lista
     if (_veioDaListagem) {
       return const SizedBox.shrink();
     }
 
+    // Linha 453: Se está carregando, mostra a roda
     if (_carregandoProdutos && _produtosEncontrados.isEmpty) {
       return const Center(
         child: Padding(
@@ -520,6 +686,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
       );
     }
 
+    // Linha 463: Se não encontrou produtos, mostra mensagem
     if (_produtosEncontrados.isEmpty && _buscaController.text.isNotEmpty) {
       return Container(
         padding: const EdgeInsets.all(20),
@@ -552,6 +719,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
       );
     }
 
+    // Linha 491: Se não digitou nada, mostra a mensagem inicial
     if (_produtosEncontrados.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(20),
@@ -584,6 +752,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
       );
     }
 
+    // Linha 519: Mostra a lista de produtos
     return Column(
       children: [
         Container(
@@ -628,6 +797,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
                   ),
                   child: Row(
                     children: [
+                      // Círculo de seleção
                       Container(
                         width: 24,
                         height: 24,
@@ -652,6 +822,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
                             : null,
                       ),
                       const SizedBox(width: 12),
+                      // Nome e estoque
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -677,6 +848,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
                           ],
                         ),
                       ),
+                      // Preço
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
@@ -702,6 +874,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
             },
           ),
         ),
+        // Botão "Carregar Mais"
         if (_temMaisProdutos)
           Padding(
             padding: const EdgeInsets.only(top: 10),
@@ -751,8 +924,9 @@ class _EntradaScreenState extends State<EntradaScreen> {
     );
   }
 
-  // ==================== QUANTIDADE ====================
-
+  // ============================================================
+  // 🔢 _BUILDQUANTIDADEFIELD — "CONSTRÓI O CAMPO QUANTIDADE"
+  // ============================================================
   Widget _buildQuantidadeField() {
     return Container(
       decoration: BoxDecoration(
@@ -801,8 +975,9 @@ class _EntradaScreenState extends State<EntradaScreen> {
     );
   }
 
-  // ==================== PREÇO UNITÁRIO ====================
-
+  // ============================================================
+  // 💰 _BUILDPRECOFIELD — "CONSTRÓI O CAMPO PREÇO UNITÁRIO"
+  // ============================================================
   Widget _buildPrecoField() {
     return Container(
       decoration: BoxDecoration(
@@ -841,8 +1016,9 @@ class _EntradaScreenState extends State<EntradaScreen> {
     );
   }
 
-  // ==================== OBSERVAÇÃO ====================
-
+  // ============================================================
+  // 📝 _BUILDOBSERVACAOFIELD — "CONSTRÓI O CAMPO OBSERVAÇÃO"
+  // ============================================================
   Widget _buildObservacaoField() {
     return Container(
       decoration: BoxDecoration(
@@ -881,8 +1057,9 @@ class _EntradaScreenState extends State<EntradaScreen> {
     );
   }
 
-  // ==================== BOTÃO REGISTRAR ====================
-
+  // ============================================================
+  // 🔘 _BUILDREGISTRARBUTTON — "CONSTRÓI O BOTÃO REGISTRAR"
+  // ============================================================
   Widget _buildRegistrarButton() {
     return SizedBox(
       width: double.infinity,
